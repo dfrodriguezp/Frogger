@@ -1,70 +1,34 @@
 from rectangle import *
 from frog import *
-from car import *
-from log import *
+from lane import *
+from params import *
+import numpy
 import sys
 import pygame
 pygame.init()
 
-def resetGame(frog):
-    frog.x = (width - grid) * 0.5
-    frog.y = height - grid
-    frog.w = grid
-
-grid = 50
-
-size = width, height = 850, 450
 canvas = pygame.display.set_mode(size)
 pygame.display.set_caption("Frogger")
 clock = pygame.time.Clock()
 
 frog = Frog((width - grid) * 0.5, height - grid, grid)
 
-# Cars
-nCars = 10
-cars = [None for i in range(nCars)]
+# Obstacles
+nLanes = int(height / grid)
+lanes = [None for i in range(nLanes)]
 index = 0
 
-# Row 2
-for i in range(3):
-    x = i * 300
-    cars[index] = Car(x, height - grid*2, grid * 2, grid, 2)
-    index += 1
-
-# Row 3
-for i in range(3):
-    x = i * 300
-    cars[index] = Car(x, height - grid*3, grid, grid, -3.5)
-    index += 1
-
-# Row 4
-for i in range(4):
-    x = i * 200 + 150
-    cars[index] = Car(x, height - grid*4, grid, grid, 2.5)
-    index += 1
-
-# Logs
-nLogs = 8
-logs = [None for i in range(nLogs)]
-index = 0
-
-# Row 6
-for i in range(2):
-    x = i * 500 + 150
-    logs[index] = Log(x, height - grid*6, grid*3, grid, 2.5)
-    index += 1
-
-# Row 7
-for i in range(3):
-    x = i * 250 + 200
-    logs[index] = Log(x, height - grid*7, grid*1.5, grid, -3.5)
-    index += 1
-
-# Row 8
-for i in range(3):
-    x = i * 500 + 300
-    logs[index] = Log(x, height - grid*8, grid*5, grid, 1.2)
-    index += 1
+lanes[0] = Lane(SAFETY, 0*grid, 0, 0, 0, 0, purple)
+lanes[1] = Lane(LOG, 1*grid, 3, 3, 1.5, 300, oColor=brown)
+lanes[2] = Lane(LOG, 2*grid, 2, 3, -3.5, 300, oColor=brown)
+lanes[3] = Lane(LOG, 3*grid, 2, 5, 2, 300, oColor=brown)
+lanes[4] = Lane(LOG, 4*grid, 3, 4, -2.5, 300, oColor=brown)
+lanes[5] = Lane(SAFETY, 5*grid, 0, 0, 0, 0, purple)
+lanes[6] = Lane(CAR, 6*grid, 3, 1, 2.5, 300)
+lanes[7] = Lane(CAR, 7*grid, 3, 2, -2, 300)
+lanes[8] = Lane(CAR, 8*grid, 2, 2, 3.5, 300)
+lanes[9] = Lane(CAR, 9*grid, 3, 2, -1.5, 300)
+lanes[10] = Lane(SAFETY, 10*grid, 0, 0, 0, 0, purple)
 
 def main():
     while True:
@@ -89,32 +53,13 @@ def main():
                     frog.move(-1, 0, grid)
 
         canvas.fill((0, 0, 0))
-        pygame.draw.rect(canvas, (104, 0, 170), (0, height-grid, width, grid)) # Row 1
-        pygame.draw.rect(canvas, (104, 0, 170), (0, height-grid*5, width, grid)) # Row 5
-        pygame.draw.rect(canvas, (152, 116, 0), (0, height-grid*9, width, grid)) # Row 5
-        
-        for car in cars:
-            car.show(canvas)
-            car.update(canvas)
-            if frog.intersects(car):
-                resetGame(frog)
-        for log in logs:
-            log.show(canvas)
-            log.update(canvas)
+        for lane in lanes:
+            lane.run(canvas)
 
-        if frog.y < height-grid*5 and frog.y >= height-grid*8:
-            ok = False
-            for log in logs:
-                if frog.intersects(log):
-                    ok = True
-                    frog.attach(log)
-            if not ok:
-                resetGame(frog)
-
-        else:
-            frog.attach(None)
+        laneIndex = int(frog.y / grid)
+        lanes[laneIndex].check(frog)
         frog.show(canvas)
-        frog.update(canvas)
+        frog.update()
         pygame.display.update()
         clock.tick(60)
 
